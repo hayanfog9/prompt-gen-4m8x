@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>사진 한 장 프롬프트 생성기</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="사진 소재와 스타일을 고르면, AI 이미지 도구에 붙여넣을 프롬프트를 한국어와 영어로 만들어 줍니다.">
+<style>
+  :root{--bg:#0f1729;--panel:#16213a;--panel2:#1b2a49;--line:#2a3a5e;--text:#e8eefa;--sub:#9fb0cb;--acc:#22d3ee;--acc2:#0e7490;--ok:#4ade80}
+  @media (prefers-color-scheme: light){:root{--bg:#f4f7fb;--panel:#fff;--panel2:#eef3fa;--line:#d5deec;--text:#14203a;--sub:#566784;--acc:#0e7490;--acc2:#67c5d9;--ok:#15803d}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:16px;line-height:1.6}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 16px 70px}
+  h1{font-size:26px;margin:0 0 6px}
+  h1 span{color:var(--acc)}
+  .lead{color:var(--sub);margin:0 0 22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin-bottom:16px}
+  h2{font-size:15px;margin:0 0 12px;color:var(--acc);letter-spacing:.03em}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--panel2);color:var(--text);border:2px solid transparent;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer}
+  .chip:hover{border-color:var(--acc2)}
+  .chip[aria-pressed="true"]{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 18%,var(--panel2));font-weight:700}
+  .styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+  .style{background:var(--panel2);border:2px solid transparent;border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;color:var(--text);font:inherit}
+  .style:hover{border-color:var(--acc2)}
+  .style[aria-pressed="true"]{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 18%,var(--panel2))}
+  .style b{display:block;font-size:15px}
+  .style small{color:var(--sub);font-size:12.5px;line-height:1.4;display:block;margin-top:2px}
+  input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font:inherit}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button.act{background:var(--acc);color:#04222a;border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;color:var(--acc);border:1px solid var(--acc2);border-radius:10px;padding:9px 14px;font:inherit;cursor:pointer}
+  pre{white-space:pre-wrap;word-break:keep-all;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 10px;font:inherit;font-size:15px}
+  .lbl{font-size:13px;color:var(--sub);margin:12px 0 6px}
+  ol{margin:0;padding-left:20px;color:var(--sub);font-size:14.5px}
+  .note{font-size:13px;color:var(--sub);margin-top:6px}
+  .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .gal figure{margin:0;cursor:pointer;background:var(--panel2);border-radius:10px;overflow:hidden;border:2px solid transparent}
+  .gal figure:hover{border-color:var(--acc2)}
+  .gal img{width:100%;display:block;aspect-ratio:1/1;object-fit:cover}
+  .gal figcaption{font-size:12.5px;color:var(--sub);padding:6px 8px}
+  footer{margin-top:26px;font-size:13px;color:var(--sub)}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--acc);color:#04222a;padding:9px 18px;border-radius:999px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
+  :focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>사진 한 장 <span>프롬프트 생성기</span></h1>
+  <p class="lead">소재와 스타일을 고르면 AI 이미지 도구에 붙여넣을 프롬프트가 만들어져요. 사진은 직접 첨부하세요.</p>
+
+  <section class="card">
+    <h2>1. 어떤 사진인가요</h2>
+    <div class="chips" id="subjects" role="group" aria-label="사진 소재"></div>
+  </section>
+
+  <section class="card">
+    <h2>2. 어떤 스타일로 바꿀까요</h2>
+    <div class="styles" id="styles" role="group" aria-label="스타일"></div>
+  </section>
+
+  <section class="card">
+    <h2>3. 분위기와 비율</h2>
+    <div class="lbl" style="margin-top:0">분위기</div>
+    <div class="chips" id="moods" role="group" aria-label="분위기"></div>
+    <div class="lbl">화면 비율</div>
+    <div class="chips" id="ratios" role="group" aria-label="화면 비율"></div>
+    <div class="lbl">추가 요청 (선택)</div>
+    <input type="text" id="extra" maxlength="120" placeholder="예: 배경은 노을 지는 바다로 / 인물은 웃는 표정으로">
+  </section>
+
+  <section class="card" aria-live="polite">
+    <h2>완성된 프롬프트</h2>
+    <div class="lbl" style="margin-top:0">한국어</div>
+    <pre id="ko"></pre>
+    <div class="row"><button class="act" id="copyKo">한국어 복사</button></div>
+    <div class="lbl">English</div>
+    <pre id="en"></pre>
+    <div class="row">
+      <button class="act" id="copyEn">영어 복사</button>
+      <button class="ghost" id="rand">랜덤 조합</button>
+      <button class="ghost" id="pack">이 소재로 전체 스타일 묶음 복사</button>
+      <button class="ghost" id="share">이 설정 링크 복사</button>
+    </div>
+  </section>
+
+  <section class="card" id="gallery" hidden>
+    <h2>예시 결과</h2>
+    <div class="note" style="margin:0 0 10px">직접 만들어 본 결과예요. 이미지를 누르면 같은 설정이 선택돼요.</div>
+    <div class="gal" id="gal"></div>
+  </section>
+
+  <section class="card">
+    <h2>이렇게 쓰세요</h2>
+    <ol>
+      <li>사진 첨부를 지원하는 AI 이미지 도구를 엽니다.</li>
+      <li>바꾸고 싶은 사진을 먼저 첨부합니다.</li>
+      <li>복사한 프롬프트를 붙여넣고 만들기를 실행합니다.</li>
+      <li>마음에 안 들면 분위기나 스타일만 바꿔서 다시 만들어 보세요.</li>
+    </ol>
+    <div class="lbl">결과가 아쉬울 때</div>
+    <ol>
+      <li>한 번에 한 가지씩만 바꿔 보세요. 스타일만, 또는 분위기만요.</li>
+      <li>추가 요청 칸에 "배경은 단순하게", "인물은 웃는 표정으로"처럼 짧게 적어 보세요.</li>
+      <li>같은 프롬프트를 영어와 한국어로 각각 시도하면 결과가 다를 수 있어요.</li>
+    </ol>
+    <div class="note">다른 사람이 나온 사진은 동의를 받고 쓰세요. AI로 만든 이미지를 올릴 때는 해당 서비스의 표시 규정을 확인하세요. 이 페이지는 입력한 내용을 저장하거나 어디로도 보내지 않아요.</div>
+  </section>
+
+  <footer>JW의 AI 작업실 · 이 페이지는 AI(Claude)의 도움으로 만들었어요.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SUBJECTS = [
+  {id:'person', name:'인물 (나·친구)', ko:'인물', en:'a person', keepKo:'얼굴 특징, 헤어스타일, 표정 (원본과 알아볼 수 있게)', keepEn:'the face, hairstyle, and expression, recognizable from the original photo'},
+  {id:'pet', name:'반려동물', ko:'반려동물', en:'a pet', keepKo:'털 색과 무늬, 귀와 눈 모양 (사진과 똑같이)', keepEn:'the fur color, markings, ears, and eyes, exactly as in the photo'},
+  {id:'travel', name:'여행·풍경', ko:'여행 풍경', en:'a travel scene', keepKo:'구도와 주요 건물·지형', keepEn:'the composition and the main landmarks of the scene'},
+  {id:'food', name:'음식', ko:'음식', en:'a dish', keepKo:'음식의 종류와 담음새 (바꾸지 말 것)', keepEn:'the type of food and its plating, unchanged'},
+  {id:'daily', name:'일상 사진', ko:'일상 장면', en:'an everyday moment', keepKo:'장면의 핵심 요소와 구도', keepEn:'the key elements and composition of the moment'},
+  {id:'item', name:'제품·소품', ko:'제품', en:'a product', keepKo:'제품의 형태와 색 (바꾸지 말 것)', keepEn:'the shape and color of the product, unchanged'}
+];
+const STYLES = [
+  {id:'film', name:'필름 카메라 감성', ko:'35mm 필름으로 찍은 듯한 사진. 은은한 필름 그레인, 살짝 바랜 색감, 부드러운 빛 번짐', en:'a photo that looks shot on 35mm film: subtle grain, slightly faded colors, soft light bloom'},
+  {id:'watercolor', name:'수채화 일러스트', ko:'부드러운 수채화 일러스트. 번지는 물감 질감과 종이 결이 보이게', en:'a soft watercolor illustration with visible paper texture and gentle color bleeding'},
+  {id:'sticker', name:'종이 스티커', ko:'두꺼운 흰 테두리가 있는 귀여운 종이 스티커. 단순한 배경과 또렷한 윤곽선', en:'a cute die-cut paper sticker with a thick white border, a simple background, and clean outlines'},
+  {id:'poster', name:'빈티지 포스터', ko:'1970년대 빈티지 포스터. 단순한 색 면, 거친 인쇄 질감, 넉넉한 여백', en:'a 1970s vintage poster with flat color shapes, rough print texture, and generous negative space'},
+  {id:'diary', name:'손그림 다이어리', ko:'손으로 그린 다이어리 낙서. 연필 선, 색연필 채색, 작은 장식 요소', en:'a hand-drawn diary doodle with pencil lines, colored-pencil shading, and small decorative marks'},
+  {id:'clay', name:'3D 클레이', ko:'손으로 빚은 3D 클레이 인형. 부드러운 곡선, 손자국 질감, 따뜻한 조명', en:'a handmade 3D clay figure with soft curves, fingerprint-like texture, and warm lighting'},
+  {id:'pixel', name:'픽셀 아트', ko:'레트로 게임 같은 픽셀 아트. 제한된 색상 팔레트와 또렷한 픽셀 경계', en:'retro game pixel art with a limited color palette and crisp pixel edges'},
+  {id:'magazine', name:'80년대 잡지', ko:'1980년대 패션 잡지 화보. 선명한 색 대비, 약간의 광택, 대담한 구도', en:'a 1980s magazine editorial with bold color contrast, a slight gloss, and a daring composition'},
+  {id:'flat', name:'미니멀 플랫 일러스트', ko:'단순한 도형과 한정된 색으로 이루어진 미니멀 플랫 일러스트. 그림자 최소화', en:'a minimal flat illustration built from simple shapes and a limited palette, with minimal shading'},
+  {id:'neon', name:'네온 야경', ko:'비 갠 밤거리에 네온 불빛이 반사되는 장면. 짙은 푸른 그림자와 선명한 네온 포인트 색', en:'a night scene lit by neon reflections on wet streets, with deep blue shadows and vivid neon accents'},
+  {id:'sketch', name:'연필 스케치', ko:'정교한 연필 스케치. 선의 강약과 해칭으로 명암을 표현', en:'a detailed pencil sketch that uses line weight and hatching to show light and shadow'},
+  {id:'collage', name:'잡지 콜라주', ko:'잡지를 오려 붙인 종이 콜라주. 겹쳐진 종이 조각, 손글씨 낙서, 거친 질감', en:'a magazine-style paper collage with cut-out layers, hand-drawn doodles, and rough textures'},
+  {id:'crayon', name:'크레용 그림', ko:'크레용으로 그린 듯한 그림. 굵은 선, 뭉툭한 색칠, 종이 결', en:'a crayon drawing with thick lines, chunky color fills, and visible paper grain'},
+  {id:'lowpoly', name:'로우폴리 3D', ko:'단순한 면으로 이루어진 로우폴리 3D. 각진 면과 부드러운 그라데이션 조명', en:'a low-poly 3D look made of simple faceted surfaces with soft gradient lighting'}
+];
+const MOODS = [
+  {id:'warm', ko:'따뜻하고 포근한', en:'warm and cozy'},
+  {id:'calm', ko:'차분하고 고요한', en:'calm and quiet'},
+  {id:'bright', ko:'밝고 경쾌한', en:'bright and cheerful'},
+  {id:'dreamy', ko:'몽환적이고 부드러운', en:'dreamy and soft-focus'},
+  {id:'dramatic', ko:'대비가 강하고 극적인', en:'dramatic with strong contrast'}
+];
+const RATIOS = ['1:1', '4:5', '9:16', '16:9', '3:4'];
+
+const $ = id => document.getElementById(id);
+const st = {s:'person', t:'film', m:'warm', r:'4:5'};
+
+function build(opt, lang){
+  const s = SUBJECTS.find(x => x.id === opt.s), t = STYLES.find(x => x.id === opt.t), m = MOODS.find(x => x.id === opt.m);
+  const extra = $('extra').value.trim();
+  if (lang === 'ko') {
+    return ['첨부한 ' + s.ko + ' 사진을 바탕으로 이미지를 만들어 주세요.',
+      '스타일: ' + t.ko, '유지할 것: ' + s.keepKo, '분위기: ' + m.ko, '화면 비율: ' + opt.r,
+      extra ? '추가 요청: ' + extra : null, '글자, 로고, 워터마크는 넣지 마세요.'].filter(Boolean).join('\n');
+  }
+  return ['Create an image based on the attached photo of ' + s.en + '.',
+    'Style: ' + t.en, 'Keep: ' + s.keepEn, 'Mood: ' + m.en, 'Aspect ratio: ' + opt.r,
+    extra ? 'Extra: ' + extra : null, 'No text, logos, or watermarks.'].filter(Boolean).join('\n');
+}
+
+function render(){
+  $('ko').textContent = build(st, 'ko'); $('en').textContent = build(st, 'en');
+  document.querySelectorAll('[data-k]').forEach(b => b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v)));
+  try { history.replaceState(null, '', '#' + new URLSearchParams(st).toString()); } catch (e) {}
+}
+function mk(boxId, key, items, label, small){
+  const box = $(boxId);
+  items.forEach(it => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.k = key; b.dataset.v = it.id || it;
+    b.className = small ? 'style' : 'chip';
+    if (small) { b.innerHTML = '<b></b><small></small>'; b.firstChild.textContent = it.name; b.lastChild.textContent = it.ko; }
+    else b.textContent = label(it);
+    b.onclick = () => { st[key] = b.dataset.v; render(); };
+    box.appendChild(b);
+  });
+}
+mk('subjects', 's', SUBJECTS, x => x.name);
+mk('styles', 't', STYLES, null, true);
+mk('moods', 'm', MOODS, x => x.ko);
+mk('ratios', 'r', RATIOS, x => x);
+$('extra').addEventListener('input', render);
+
+function toast(t){ const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 1500); }
+async function copy(text, msg){
+  try { await navigator.clipboard.writeText(text); toast(msg || '복사했어요'); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast(msg || '복사했어요'); } catch (_) { toast('복사하지 못했어요. 직접 선택해서 복사하세요'); } ta.remove(); }
+}
+$('copyKo').onclick = () => copy($('ko').textContent, '한국어 프롬프트를 복사했어요');
+$('copyEn').onclick = () => copy($('en').textContent, '영어 프롬프트를 복사했어요');
+$('rand').onclick = () => {
+  st.t = STYLES[Math.floor(Math.random() * STYLES.length)].id; st.m = MOODS[Math.floor(Math.random() * MOODS.length)].id; render();
+};
+$('pack').onclick = () => {
+  const s = SUBJECTS.find(x => x.id === st.s);
+  const txt = STYLES.map((t, i) => (i + 1) + '. ' + t.name + '\n' + build({...st, t:t.id}, 'ko')).join('\n\n');
+  copy('[' + s.name + ' · 스타일 ' + STYLES.length + '가지 프롬프트]\n\n' + txt, STYLES.length + '개 스타일 묶음을 복사했어요');
+};
+$('share').onclick = () => copy(location.href, '설정 링크를 복사했어요');
+
+// 예시 결과 갤러리: examples 폴더의 이미지를 아래 목록에 적으면 자동으로 나타난다. 목록이 비어 있거나 이미지가 없으면 이 구역은 숨겨진다.
+// 항목 형식: {src:'examples/예시1.jpg', s:'pet', t:'sticker', m:'warm', r:'4:5', cap:'반려동물 · 종이 스티커'}
+const EXAMPLES = [];
+(function(){
+  let shown = 0;
+  EXAMPLES.forEach(ex => {
+    if (!SUBJECTS.some(x => x.id === ex.s) || !STYLES.some(x => x.id === ex.t)) return;
+    const f = document.createElement('figure'), img = document.createElement('img'), cap = document.createElement('figcaption');
+    img.src = ex.src; img.alt = ex.cap || '예시 결과'; cap.textContent = ex.cap || '';  // 숨겨진 구역의 이미지는 지연 로딩이 안 되므로 바로 불러온다
+    img.onload = () => { shown++; $('gallery').hidden = false; };
+    img.onerror = () => f.remove();
+    f.onclick = () => { st.s = ex.s; st.t = ex.t; if (MOODS.some(x => x.id === ex.m)) st.m = ex.m; if (RATIOS.includes(ex.r)) st.r = ex.r; render(); $('ko').scrollIntoView({behavior: 'smooth', block: 'center'}); };
+    f.append(img, cap); $('gal').appendChild(f);
+  });
+})();
+
+// 링크의 #설정을 읽어 복원 (잘못된 값은 무시)
+(function(){
+  try {
+    const p = new URLSearchParams(location.hash.slice(1));
+    if (SUBJECTS.some(x => x.id === p.get('s'))) st.s = p.get('s');
+    if (STYLES.some(x => x.id === p.get('t'))) st.t = p.get('t');
+    if (MOODS.some(x => x.id === p.get('m'))) st.m = p.get('m');
+    if (RATIOS.includes(p.get('r'))) st.r = p.get('r');
+  } catch (e) {}
+  render();
+})();
+</script>
+</body>
+</html>
