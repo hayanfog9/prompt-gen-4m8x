@@ -88,7 +88,7 @@
 
   <section class="card" id="gallery" hidden>
     <h2>예시 결과</h2>
-    <div class="note" style="margin:0 0 10px">직접 만들어 본 결과예요. 이미지를 누르면 같은 설정이 선택돼요.</div>
+    <div class="note" style="margin:0 0 10px">Gemini로 직접 만들어 본 결과예요(AI로 만든 이미지입니다). 사진마다 결과는 달라질 수 있어요. 이미지를 누르면 같은 설정이 선택돼요.</div>
     <div class="gal" id="gal"></div>
   </section>
 
@@ -204,7 +204,11 @@ $('share').onclick = () => copy(location.href, '설정 링크를 복사했어요
 
 // 예시 결과 갤러리: examples 폴더의 이미지를 아래 목록에 적으면 자동으로 나타난다. 목록이 비어 있거나 이미지가 없으면 이 구역은 숨겨진다.
 // 항목 형식: {src:'examples/예시1.jpg', s:'pet', t:'sticker', m:'warm', r:'4:5', cap:'반려동물 · 종이 스티커'}
-const EXAMPLES = [];
+const EXAMPLES = [
+  {src:'examples/ex1_pet_sticker.jpg', s:'pet', t:'sticker', m:'warm', r:'4:5', cap:'반려동물 · 종이 스티커'},
+  {src:'examples/ex2_travel_watercolor.jpg', s:'travel', t:'watercolor', m:'calm', r:'16:9', cap:'여행·풍경 · 수채화 일러스트'},
+  {src:'examples/ex3_food_diary.jpg', s:'food', t:'diary', m:'warm', r:'9:16', cap:'음식 · 손그림 다이어리'}
+];
 (function(){
   let shown = 0;
   EXAMPLES.forEach(ex => {
